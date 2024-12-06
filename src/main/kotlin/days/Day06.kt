@@ -48,33 +48,7 @@ class Day06 : Day(6) {
         return position.x in 0..maxX && position.y in 0..maxY
     }
 
-    override fun solvePartOne(inputString: String): Any {
-        val parsedInput: Triple<List<Point2D>, Point2D, Int> = parseInput(inputString)
-        val walls: List<Point2D> = parsedInput.first
-        var position: Point2D = parsedInput.second
-        var direction: Int = parsedInput.third
-
-        val visitedPoints: MutableSet<Point2D> = mutableSetOf()
-        val maxY: Int = inputString.lines().size - 1
-        val maxX: Int = inputString.lines()[0].length - 1
-
-        while (isPositionInGrid(position, maxY, maxX)) {
-            visitedPoints.add(position)
-
-            val nextPosition: Point2D = position.addToPoint(directions[direction]!!)
-
-            if (walls.contains(nextPosition)) {
-                direction = (direction + 1) % 4
-                continue
-            }
-
-            position = nextPosition
-        }
-
-        return visitedPoints.size
-    }
-
-    private fun containsLoop(walls: List<Point2D>, initialPosition: Point2D, initialDirection: Int, maxY: Int, maxX: Int): Boolean {
+    private fun walkPath(walls: List<Point2D>, initialPosition: Point2D, initialDirection: Int, maxY: Int, maxX: Int): Pair<Boolean, Set<Point2D>> {
         var position: Point2D = initialPosition
         var direction: Int = initialDirection
         val visitedPoints: MutableSet<Pair<Point2D, Int>> = mutableSetOf(Pair(position, direction))
@@ -83,7 +57,7 @@ class Day06 : Day(6) {
             val nextPosition: Point2D = position.addToPoint(directions[direction]!!)
 
             if (visitedPoints.contains(Pair(nextPosition, direction))) {
-                return true
+                return Pair(true, visitedPoints.map { it.first }.toSet())
             }
 
             if (walls.contains(nextPosition)) {
@@ -94,7 +68,16 @@ class Day06 : Day(6) {
             visitedPoints.add(Pair(position, direction))
             position = nextPosition
         }
-        return false
+        return Pair(false, visitedPoints.map { it.first }.toSet())
+    }
+
+    override fun solvePartOne(inputString: String): Any {
+        val (walls: List<Point2D>, initialPosition: Point2D, initialDirection: Int) = parseInput(inputString)
+
+        val maxY: Int = inputString.lines().size - 1
+        val maxX: Int = inputString.lines()[0].length - 1
+
+        return walkPath(walls, initialPosition, initialDirection, maxY, maxX).second.size
     }
 
     override fun solvePartTwo(inputString: String): Any {
@@ -102,26 +85,17 @@ class Day06 : Day(6) {
         val maxY: Int = inputString.lines().size - 1
         val maxX: Int = inputString.lines()[0].length - 1
 
-        var newObstructionPositionCount = 0
+        val visitedPositions: Set<Point2D> = walkPath(walls, initialPosition, initialDirection, maxY, maxX).second
 
-        for (newX in 0..maxX) {
-            newYPositionLoop@ for (newY in 0..maxY) {
-                val newPoint = Point2D(newX.toLong(), newY.toLong());
-                if (walls.contains(newPoint) || initialPosition == newPoint) {
-                    continue@newYPositionLoop
-                }
-
-                val newWalls: MutableList<Point2D> = walls.toMutableList()
-                newWalls.add(newPoint)
-
-                if (containsLoop(newWalls, initialPosition, initialDirection, maxY, maxX)) {
-                    newObstructionPositionCount++
-                }
+        return visitedPositions.count {
+            if (initialPosition == it) {
+                return@count false
             }
-            println(newX)
-        }
 
-        return newObstructionPositionCount
+            val newWalls: MutableList<Point2D> = walls.toMutableList()
+            newWalls.add(it)
+            walkPath(newWalls, initialPosition, initialDirection, maxY, maxX).first
+        }
     }
 }
 
