@@ -87,15 +87,15 @@ class Day06 : Day(6) {
 
         val visitedPositions: Set<Point2D> = walkPath(walls, initialPosition, initialDirection, maxY, maxX).second
 
-        return visitedPositions.count {
+        return visitedPositions.parallelStream().filter {
             if (initialPosition == it) {
-                return@count false
+                return@filter false
             }
 
             val newWalls: MutableList<Point2D> = walls.toMutableList()
             newWalls.add(it)
             walkPath(newWalls, initialPosition, initialDirection, maxY, maxX).first
-        }
+        }.count()
     }
 }
 
