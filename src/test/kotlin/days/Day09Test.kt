@@ -43,6 +43,6 @@ class Day09Test {
     fun solvePartTwo() {
         val result = day09.solvePartTwoFromFile()
 
-        assertEquals(1, result)
+        assertEquals(6511178035564L, result)
     }
 }
